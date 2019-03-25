@@ -13,3 +13,15 @@ class Sphere:
         self.radius = radius
         self.albedo = albedo
         self.is_mirror = is_mirror
+
+class Light:
+    def __init__(self, position: np.array =np.array([0,0,0]), intensity: int = 0):
+        self.position = position
+        self.intensity = intensity
+
+
+class Scene:
+    def __init__(self, objects: list = [], light:Light = Light()):
+        self.light = light
+        self.objects = objects
+
