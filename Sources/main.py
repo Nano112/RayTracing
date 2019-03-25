@@ -48,32 +48,47 @@ def intersect_dans_scene(s, r: Ray):
 
 
 def normalize(a: np.array):
-
     return a / math.sqrt(norm2(a))
 
 
-def get_luminosity(scene, original_ray, nb_bounces:int = 0):
-    if nb_bounces >= 10:
+def sqr(a):
+    return a**2
+
+
+def get_luminosity(scene, original_ray, nb_iterations: int = 0):
+
+    if nb_iterations >= 10:
         return 0, 0, 0
 
     ray, closest_scene_object, _ = intersect_dans_scene(scene, original_ray)
     if ray is not None:
 
-        if closest_scene_object.is_mirror:
-            mirror_ray = Ray(ray.origin + 0.01 * ray.direction, ray.direction)
-            return get_luminosity(scene, mirror_ray, nb_bounces+1)
+        if closest_scene_object.material.is_mirror:
+            mirror_direction = original_ray.direction - 2 * np.dot(ray.direction, original_ray.direction)*ray.direction
+            mirror_ray = Ray(ray.origin + 0.001 * ray.direction, mirror_direction)
+            return get_luminosity(scene, mirror_ray, nb_iterations + 1)
 
-        elif closest_scene_object.is_transparent:
-            transparent_ray = ray.direction - 2 * np.dot(ray.direction )
-            return get_luminosity(scene, Ray(ray.origin + 0.01 * ray.direction, ray.direction), nb_bounces+1)
+        elif closest_scene_object.material.is_transparent:
+            n1 = 1
+            n2 = closest_scene_object.material.refraction_index
+            transparent_normal = ray.direction
+            if np.dot(original_ray.direction, ray.direction) > 0:
+                n1, n2 = n2, n1
+                transparent_normal = -ray.direction
+            radical = 1 - sqr(n1/n2)*(1-sqr(np.dot(transparent_normal, original_ray.direction)))
+            if radical > 0:
+                refracted_direction = (n1/n2) * (original_ray.direction - np.dot(original_ray.direction, transparent_normal)*transparent_normal) - transparent_normal * math.sqrt(radical)
+                refracted_ray = Ray(ray.origin - 0.01 * transparent_normal, refracted_direction)
+                return get_luminosity(scene, refracted_ray, nb_iterations + 1)
 
         else:
-            ray_light = Ray(ray.origin + 0.01 * ray.direction, normalize(scene.light.position - ray.origin))
+            ray_light = Ray(ray.origin + 0.001 * ray.direction, normalize(scene.light.position - ray.origin))
             closest_ray_light, closest_scene_object_to_ray_light, t_light = intersect_dans_scene(scene, ray_light)
-            if  closest_scene_object_to_ray_light is not None and t_light * t_light < norm2(scene.light.position - ray.origin):
+            if closest_scene_object_to_ray_light is not None and t_light * t_light < norm2(
+                    scene.light.position - ray.origin):
                 intensity = [0, 0, 0]
             else:
-                intensity = closest_scene_object.albedo * scene.light.intensity * \
+                intensity = closest_scene_object.material.albedo * scene.light.intensity * \
                             np.dot(normalize(scene.light.position - ray.origin), ray.direction) \
                             / math.sqrt(norm2(scene.light.position - ray.origin))
 
@@ -84,18 +99,18 @@ def get_luminosity(scene, original_ray, nb_bounces:int = 0):
     return None
 
 
-def render_scene(scene: Scene, width: int= 200, height: int = 200, fov: int = 60):
+def render_scene(scene: Scene, width: int = 200, height: int = 200, fov: int = 60):
     fov = fov * math.pi / 180
     image = np.zeros((height, width, 3), dtype=np.uint8)
     for x in range(0, width):
         for y in range(0, height):
-            if (x*height+y) % 1000 == 0:
-                print(repr(100*(x*height+y)/(width*height))+'%')
+            if (x * height + y) % 1000 == 0:
+                print(repr(100 * (x * height + y) / (width * height)) + '%')
             direction = normalize(np.array([x - width / 2, y - height / 2, -width / (2 * math.tan(fov / 2))]))
             original_ray = Ray(np.array([0, 0, 0]), direction)
             luminosity = get_luminosity(scene, original_ray)
             if luminosity is not None:
-                image[height-y-1][x] = luminosity
+                image[height - y - 1][x] = luminosity
     return image
 
 
@@ -111,31 +126,38 @@ def create_scene():
     yellow = Material(albedo=np.array([1, 1, 0]))
     cyan = Material(albedo=np.array([0, 1, 1]))
     orange = Material(albedo=np.array([1, 0.5, 0]))
+    pink = Material(albedo=np.array([237/255, 64/255, 170/255]))
 
     mirror = Material(is_mirror=True)
 
+    transparent = Material(is_transparent=True, refraction_index=1.3)
+
     scene.light.intensity = 10000000
-    scene.light.position = np.array([0, 100, -80])
+    scene.light.position = np.array([0, 100, -200])
     scene.objects.append(Sphere(np.array([0, -plane_size - 100, 0]), plane_size, purple))  # Floor
     scene.objects.append(Sphere(np.array([plane_size + 400, 0, 0]), plane_size, yellow))  # Right Wall
     scene.objects.append(Sphere(np.array([0, plane_size + 800, 0]), plane_size, cyan))  # Roof
     scene.objects.append(Sphere(np.array([-plane_size - 400, 0, 0]), plane_size, green))  # Left Wall
-    scene.objects.append(Sphere(np.array([0, 0, plane_size + 400]), plane_size, white))  # Back Wall
+    scene.objects.append(Sphere(np.array([0, 0, plane_size + 400]), plane_size, pink))  # Back Wall
     scene.objects.append(Sphere(np.array([0, 0, -plane_size - 400]), plane_size, white))  # Front Wall
-    scene.objects.append(Sphere(np.array([0, -30, -200]), 80,  mirror))
+
+    scene.objects.append(Sphere(np.array([0, -15, -200]), 80, transparent))
     scene.objects.append(Sphere(np.array([0, 0, -100]), 20, mirror))
-    scene.objects.append(Sphere(np.array([-20, -15, -110]), 10,  mirror))
-    scene.objects.append(Sphere(np.array([40, 15, -80]), 10,  mirror))
+    scene.objects.append(Sphere(np.array([-30, -15, -300]), 10, mirror))
+    scene.objects.append(Sphere(np.array([40, 15, -80]), 10, mirror))
+    scene.objects.append(Sphere(np.array([-30, 15, -250]), 5, green))
     scene.objects.append(Sphere(np.array([-30, 0, -60]), 5, red))
     scene.objects.append(Sphere(np.array([-30, 30, -80]), 5, blue))
     scene.objects.append(Sphere(np.array([0, -20, -100]), 5, orange))
     return scene
 
+
 def main():
     scene = create_scene()
-    image = render_scene(scene, width=100, height=100, fov=110)
+    image = render_scene(scene, width=200, height=200, fov=110)
     img = PIL.Image.fromarray(image)
     img.save('Test.bmp')
     img.show()
+
 
 main()

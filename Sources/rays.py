@@ -8,7 +8,7 @@ class Ray:
 
 
 class Material:
-    def __init__(self, albedo:np.array = np.array([0, 0, 0]), is_mirror: bool = False, is_transparent: bool = False, refraction_index: np.float64 = 1.0):
+    def __init__(self, albedo: np.array = np.array([0, 0, 0]), is_mirror: bool = False, is_transparent: bool = False, refraction_index: float = 1.0):
         self.albedo = albedo
         self.is_mirror = is_mirror
         self.is_transparent = is_transparent
