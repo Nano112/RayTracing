@@ -62,7 +62,7 @@ def get_luminosity(scene, original_ray, nb_bounces:int = 0):
         else :
             ray_light = Ray(ray.origin + 0.01 * ray.direction, normalize(scene.light.position - ray.origin))
             closest_ray_light, closest_scene_object_to_ray_light, t_light = intersect_dans_scene(scene, ray_light)
-            if False and closest_scene_object_to_ray_light is not None and t_light * t_light < norm2(scene.light.position - ray.origin):
+            if  closest_scene_object_to_ray_light is not None and t_light * t_light < norm2(scene.light.position - ray.origin):
                 intensity = [0, 0, 0]
             else:
                 intensity = closest_scene_object.albedo * scene.light.intensity * \
@@ -94,24 +94,30 @@ def render_scene(scene: Scene, width: int= 200, height: int =200, fov:int = 60):
 
 
 def create_scene():
-    plane_size = 4000
+    plane_size = 40000
     scene=Scene()
     scene.light.intensity = 10000000
-    scene.light.position = np.array([0, 30, -80])
+    scene.light.position = np.array([0, 100, -80])
     scene.objects.append(Sphere(np.array([0, -plane_size - 100, 0]), plane_size, np.array([0, 1, 1])))  # Floor
-    scene.objects.append(Sphere(np.array([plane_size + 200, 0, 0]), plane_size, np.array([1, 1, 0])))  # Right Wall
-    scene.objects.append(Sphere(np.array([0, plane_size + 200, 0]), plane_size, np.array([1, 0, 1])))  # Roof
-    scene.objects.append(Sphere(np.array([-plane_size - 200, 0, 0]), plane_size, np.array([0, 1, 0])))  # Left Wall
-    scene.objects.append(Sphere(np.array([0, 0, -plane_size - 300]), plane_size, np.array([1, 1, 1])))  # Back Wall
+    scene.objects.append(Sphere(np.array([plane_size + 400, 0, 0]), plane_size, np.array([1, 1, 0])))  # Right Wall
+    scene.objects.append(Sphere(np.array([0, plane_size + 800, 0]), plane_size, np.array([1, 0, 1])))  # Roof
+    scene.objects.append(Sphere(np.array([-plane_size - 400, 0, 0]), plane_size, np.array([0, 1, 0])))  # Left Wall
+    scene.objects.append(Sphere(np.array([0, 0, plane_size + 400]), plane_size, np.array([1, 1, 1])))  # Back Wall
+    scene.objects.append(Sphere(np.array([0, 0, -plane_size - 400]), plane_size, np.array([1, 0.5, 0.5])))  # Front Wall
+    scene.objects.append(Sphere(np.array([0, -30, -200]), 80, np.array([1, 0.5, 0]), is_mirror=True))
     scene.objects.append(Sphere(np.array([0, 0, -100]), 20, np.array([1, 0.5, 0]),is_mirror=True))
-    scene.objects.append(Sphere(np.array([-20, -15, -80]), 10, np.array([0, 0.5, 0.2]), is_mirror=True))
-    scene.objects.append(Sphere(np.array([0, 0, -80]), 5, np.array([0.7, 0, 0.2])))
+    scene.objects.append(Sphere(np.array([-20, -15, -110]), 10, np.array([0, 0.5, 0.2]), is_mirror=True))
+    scene.objects.append(Sphere(np.array([40, 15, -80]), 10, np.array([0, 0.5, 0.2]), is_mirror=True))
+    scene.objects.append(Sphere(np.array([-30, 0, -60]), 5, np.array([0.7, 0, 0.2])))
+    scene.objects.append(Sphere(np.array([-30, 30, -80]), 5, np.array([0.7, 0.7, 0.2])))
+    scene.objects.append(Sphere(np.array([0, -20, -100]), 5, np.array([0.7, 1, 0.2])))
     return scene
 
 def main():
     scene = create_scene()
-    image = render_scene(scene,width=500,height=500, fov=90)
+    image = render_scene(scene, width=100, height=100, fov=110)
     img = PIL.Image.fromarray(image)
+    img.save('Test.bmp')
     img.show()
 
 main()
