@@ -7,15 +7,23 @@ class Ray:
         self.direction = direction
 
 
-class Sphere:
-    def __init__(self, origin: np.array, radius: int, albedo: np.array, is_mirror: bool = False):
-        self.origin = origin
-        self.radius = radius
+class Material:
+    def __init__(self, albedo:np.array = np.array([0, 0, 0]), is_mirror: bool = False, is_transparent: bool = False, refraction_index: np.float64 = 1.0):
         self.albedo = albedo
         self.is_mirror = is_mirror
+        self.is_transparent = is_transparent
+        self.refraction_index = refraction_index
+
+
+class Sphere:
+    def __init__(self, origin: np.array, radius: int, material: Material = Material()):
+        self.origin = origin
+        self.radius = radius
+        self.material = material
+
 
 class Light:
-    def __init__(self, position: np.array =np.array([0,0,0]), intensity: int = 0):
+    def __init__(self, position: np.array = np.array([0, 0, 0]), intensity: int = 0):
         self.position = position
         self.intensity = intensity
 

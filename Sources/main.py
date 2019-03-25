@@ -8,6 +8,7 @@ from Sources.rays import *
 def norm2(a: np.array):
     return np.sum(a * a)
 
+
 def intersect_ray_sphere(r: Ray, s: Sphere):
     a: int = 1
     b: int = 2 * np.dot(r.direction, r.origin - s.origin)
@@ -53,13 +54,20 @@ def normalize(a: np.array):
 
 def get_luminosity(scene, original_ray, nb_bounces:int = 0):
     if nb_bounces >= 10:
-        return (0, 0, 0)
+        return 0, 0, 0
 
     ray, closest_scene_object, _ = intersect_dans_scene(scene, original_ray)
     if ray is not None:
+
         if closest_scene_object.is_mirror:
+            mirror_ray = Ray(ray.origin + 0.01 * ray.direction, ray.direction)
+            return get_luminosity(scene, mirror_ray, nb_bounces+1)
+
+        elif closest_scene_object.is_transparent:
+            transparent_ray = ray.direction - 2 * np.dot(ray.direction )
             return get_luminosity(scene, Ray(ray.origin + 0.01 * ray.direction, ray.direction), nb_bounces+1)
-        else :
+
+        else:
             ray_light = Ray(ray.origin + 0.01 * ray.direction, normalize(scene.light.position - ray.origin))
             closest_ray_light, closest_scene_object_to_ray_light, t_light = intersect_dans_scene(scene, ray_light)
             if  closest_scene_object_to_ray_light is not None and t_light * t_light < norm2(scene.light.position - ray.origin):
@@ -72,13 +80,11 @@ def get_luminosity(scene, original_ray, nb_bounces:int = 0):
             r = min(255, max(0, np.power(intensity[0], 1 / 2.2)))
             g = min(255, max(0, np.power(intensity[1], 1 / 2.2)))
             b = min(255, max(0, np.power(intensity[2], 1 / 2.2)))
-            return (r, g, b)
+            return r, g, b
     return None
 
 
-
-
-def render_scene(scene: Scene, width: int= 200, height: int =200, fov:int = 60):
+def render_scene(scene: Scene, width: int= 200, height: int = 200, fov: int = 60):
     fov = fov * math.pi / 180
     image = np.zeros((height, width, 3), dtype=np.uint8)
     for x in range(0, width):
@@ -95,22 +101,34 @@ def render_scene(scene: Scene, width: int= 200, height: int =200, fov:int = 60):
 
 def create_scene():
     plane_size = 40000
-    scene=Scene()
+    scene = Scene()
+
+    white = Material(albedo=np.array([1, 1, 1]))
+    red = Material(albedo=np.array([1, 0, 0]))
+    green = Material(albedo=np.array([0, 1, 0]))
+    blue = Material(albedo=np.array([0, 0, 1]))
+    purple = Material(albedo=np.array([1, 0, 1]))
+    yellow = Material(albedo=np.array([1, 1, 0]))
+    cyan = Material(albedo=np.array([0, 1, 1]))
+    orange = Material(albedo=np.array([1, 0.5, 0]))
+
+    mirror = Material(is_mirror=True)
+
     scene.light.intensity = 10000000
     scene.light.position = np.array([0, 100, -80])
-    scene.objects.append(Sphere(np.array([0, -plane_size - 100, 0]), plane_size, np.array([0, 1, 1])))  # Floor
-    scene.objects.append(Sphere(np.array([plane_size + 400, 0, 0]), plane_size, np.array([1, 1, 0])))  # Right Wall
-    scene.objects.append(Sphere(np.array([0, plane_size + 800, 0]), plane_size, np.array([1, 0, 1])))  # Roof
-    scene.objects.append(Sphere(np.array([-plane_size - 400, 0, 0]), plane_size, np.array([0, 1, 0])))  # Left Wall
-    scene.objects.append(Sphere(np.array([0, 0, plane_size + 400]), plane_size, np.array([1, 1, 1])))  # Back Wall
-    scene.objects.append(Sphere(np.array([0, 0, -plane_size - 400]), plane_size, np.array([1, 0.5, 0.5])))  # Front Wall
-    scene.objects.append(Sphere(np.array([0, -30, -200]), 80, np.array([1, 0.5, 0]), is_mirror=True))
-    scene.objects.append(Sphere(np.array([0, 0, -100]), 20, np.array([1, 0.5, 0]),is_mirror=True))
-    scene.objects.append(Sphere(np.array([-20, -15, -110]), 10, np.array([0, 0.5, 0.2]), is_mirror=True))
-    scene.objects.append(Sphere(np.array([40, 15, -80]), 10, np.array([0, 0.5, 0.2]), is_mirror=True))
-    scene.objects.append(Sphere(np.array([-30, 0, -60]), 5, np.array([0.7, 0, 0.2])))
-    scene.objects.append(Sphere(np.array([-30, 30, -80]), 5, np.array([0.7, 0.7, 0.2])))
-    scene.objects.append(Sphere(np.array([0, -20, -100]), 5, np.array([0.7, 1, 0.2])))
+    scene.objects.append(Sphere(np.array([0, -plane_size - 100, 0]), plane_size, purple))  # Floor
+    scene.objects.append(Sphere(np.array([plane_size + 400, 0, 0]), plane_size, yellow))  # Right Wall
+    scene.objects.append(Sphere(np.array([0, plane_size + 800, 0]), plane_size, cyan))  # Roof
+    scene.objects.append(Sphere(np.array([-plane_size - 400, 0, 0]), plane_size, green))  # Left Wall
+    scene.objects.append(Sphere(np.array([0, 0, plane_size + 400]), plane_size, white))  # Back Wall
+    scene.objects.append(Sphere(np.array([0, 0, -plane_size - 400]), plane_size, white))  # Front Wall
+    scene.objects.append(Sphere(np.array([0, -30, -200]), 80,  mirror))
+    scene.objects.append(Sphere(np.array([0, 0, -100]), 20, mirror))
+    scene.objects.append(Sphere(np.array([-20, -15, -110]), 10,  mirror))
+    scene.objects.append(Sphere(np.array([40, 15, -80]), 10,  mirror))
+    scene.objects.append(Sphere(np.array([-30, 0, -60]), 5, red))
+    scene.objects.append(Sphere(np.array([-30, 30, -80]), 5, blue))
+    scene.objects.append(Sphere(np.array([0, -20, -100]), 5, orange))
     return scene
 
 def main():
