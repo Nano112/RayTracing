@@ -161,7 +161,7 @@ def main():
     image = render_scene(scene, width=400, height=400, fov=110)
 
     img = Image.fromarray(image)
-    img.save('scene.bmp')
+    img.save('reflective_scene.bmp')
     img.show()
 
 
