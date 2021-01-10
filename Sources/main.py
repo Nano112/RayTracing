@@ -1,9 +1,7 @@
 import math
-import PIL
+from PIL import Image
 from timeit import default_timer as timer
-from numba import jit
 import numpy as np
-import scipy.misc as smp
 from Sources.rays import *
 
 
@@ -137,28 +135,29 @@ def create_scene():
 
     scene.light.intensity = 1000000000
     scene.light.position = np.array([0, 100, -200])
-    scene.objects.append(Sphere(np.array([0, -plane_size - 100, 0]), plane_size, mirror))  # Floor
-    scene.objects.append(Sphere(np.array([plane_size + 400, 0, 0]), plane_size, mirror))  # Right Wall
-    scene.objects.append(Sphere(np.array([0, plane_size + 800, 0]), plane_size, mirror))  # Roof
-    scene.objects.append(Sphere(np.array([-plane_size - 400, 0, 0]), plane_size, mirror))  # Left Wall
-    scene.objects.append(Sphere(np.array([0, 0, plane_size + 400]), plane_size, mirror))  # Back Wall
-    scene.objects.append(Sphere(np.array([0, 0, -plane_size - 400]), plane_size, mirror))  # Front Wall
+    scene.objects.append(Sphere(np.array([0, -plane_size - 100, 0]), plane_size, red))  # Floor
+    scene.objects.append(Sphere(np.array([plane_size + 400, 0, 0]), plane_size, green))  # Right Wall
+    scene.objects.append(Sphere(np.array([0, plane_size + 800, 0]), plane_size, blue))  # Roof
+    scene.objects.append(Sphere(np.array([-plane_size - 400, 0, 0]), plane_size, purple))  # Left Wall
+    scene.objects.append(Sphere(np.array([0, 0, plane_size + 400]), plane_size, orange))  # Back Wall
+    scene.objects.append(Sphere(np.array([0, 0, -plane_size - 400]), plane_size, cyan))  # Front Wall
 
-    scene.objects.append(Sphere(np.array([0, -15, -200]), 80, red))
-    scene.objects.append(Sphere(np.array([0, 0, -100]), 20, red))
-    scene.objects.append(Sphere(np.array([-30, -15, -300]), 10, red))
+    scene.objects.append(Sphere(np.array([0, -15, -200]), 80, mirror))
+    scene.objects.append(Sphere(np.array([0, 0, -100]), 20, mirror))
+    scene.objects.append(Sphere(np.array([-30, -15, -300]), 10, mirror))
     scene.objects.append(Sphere(np.array([40, 15, -80]), 10, mirror))
-    scene.objects.append(Sphere(np.array([-30, 15, -250]), 5, green))
-    scene.objects.append(Sphere(np.array([-30, 0, -60]), 5, red))
-    scene.objects.append(Sphere(np.array([-30, 30, -80]), 5, blue))
-    scene.objects.append(Sphere(np.array([0, -20, -100]), 5, orange))
+    scene.objects.append(Sphere(np.array([-30, 15, -250]), 5, mirror))
+    scene.objects.append(Sphere(np.array([-30, 0, -60]), 5, mirror))
+    scene.objects.append(Sphere(np.array([-30, 30, -80]), 5, mirror))
+    scene.objects.append(Sphere(np.array([0, -20, -100]), 5, mirror))
     return scene
 
 
 def main():
     scene = create_scene()
     image = render_scene(scene, width=400, height=400, fov=110)
-    img = PIL.Image.fromarray(image)
+
+    img = Image.fromarray(image)
     img.save('Test.bmp')
     img.show()
 
