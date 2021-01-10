@@ -64,7 +64,8 @@ def get_luminosity(scene, original_ray, nb_iterations: int = 0):
     if ray is not None:
 
         if closest_scene_object.material.is_mirror:
-            mirror_direction = original_ray.direction - 2 * np.dot(ray.direction, original_ray.direction) * ray.direction
+            mirror_direction = original_ray.direction - 2 * np.dot(ray.direction,
+                                                                   original_ray.direction) * ray.direction
             mirror_ray = Ray(ray.origin + 0.001 * ray.direction, mirror_direction)
             return get_luminosity(scene, mirror_ray, nb_iterations + 1)
 
@@ -77,23 +78,25 @@ def get_luminosity(scene, original_ray, nb_iterations: int = 0):
                 transparent_normal = -ray.direction
             radical = 1 - sqr(n1 / n2) * (1 - sqr(np.dot(transparent_normal, original_ray.direction)))
             if radical > 0:
-                refracted_direction = (n1 / n2) * (original_ray.direction - np.dot(original_ray.direction,  transparent_normal) * transparent_normal) - transparent_normal * math.sqrt(radical)
+                refracted_direction = (n1 / n2) * (original_ray.direction - np.dot(original_ray.direction,
+                                                                                   transparent_normal) * transparent_normal) - transparent_normal * math.sqrt(
+                    radical)
                 refracted_ray = Ray(ray.origin - 0.01 * transparent_normal, refracted_direction)
                 return get_luminosity(scene, refracted_ray, nb_iterations + 1)
         else:
             ray_light = Ray(ray.origin + 0.001 * ray.direction, normalize(scene.light.position - ray.origin))
             closest_ray_light, closest_scene_object_to_ray_light, t_light = intersect_dans_scene(scene, ray_light)
-            if False and closest_scene_object_to_ray_light is not None and t_light * t_light < norm2(
-                    scene.light.position - ray.origin):
-                intensity = [0, 0, 0]
-            else:
-                intensity = closest_scene_object.material.albedo * scene.light.intensity * \
-                            np.dot(normalize(scene.light.position - ray.origin), ray.direction) \
-                            / math.sqrt(norm2(scene.light.position - ray.origin))
-
+            angle = np.dot(normalize(scene.light.position - ray.origin), ray.direction)
+            intensity = closest_scene_object.material.albedo * scene.light.intensity * angle / math.sqrt(norm2(scene.light.position - ray.origin))
             r = min(255, max(0, np.power(intensity[0], 1 / 2.2)))
             g = min(255, max(0, np.power(intensity[1], 1 / 2.2)))
             b = min(255, max(0, np.power(intensity[2], 1 / 2.2)))
+            if closest_scene_object_to_ray_light is not None and t_light * t_light < norm2(
+                    scene.light.position - ray.origin):
+                r = r*0.1
+                g = g*0.1
+                b = b*0.1
+
             return r, g, b
     return None
 
@@ -133,7 +136,7 @@ def create_scene():
 
     transparent = Material(is_transparent=True, refraction_index=1.3)
 
-    scene.light.intensity = 1000000000
+    scene.light.intensity = 100000000
     scene.light.position = np.array([0, 100, -200])
     scene.objects.append(Sphere(np.array([0, -plane_size - 100, 0]), plane_size, red))  # Floor
     scene.objects.append(Sphere(np.array([plane_size + 400, 0, 0]), plane_size, green))  # Right Wall
@@ -158,7 +161,7 @@ def main():
     image = render_scene(scene, width=400, height=400, fov=110)
 
     img = Image.fromarray(image)
-    img.save('Test.bmp')
+    img.save('scene.bmp')
     img.show()
 
 
